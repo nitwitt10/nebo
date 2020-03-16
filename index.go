@@ -69,9 +69,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getRep(repName string) (string, error) {
+func getRep(url string) (string, error) {
 	// TODO sanatize input to prevent accidental SQL injection from people in our slack.
-	q := "SELECT Name FROM User WHERE id IN (SELECT CS_Manager__c FROM Account WHERE Website ='" + repName + "')"
+	q := "SELECT Name FROM User WHERE id IN (SELECT CS_Manager__c FROM Account WHERE Website like '%" + url + "')"
 	result, err := client.Query(q)
 	if err != nil {
 		return "", err
