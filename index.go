@@ -29,6 +29,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	if !s.ValidateToken(slackVerificationCode) {
 		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("slack verification failed"))
 		return
 	}
 
