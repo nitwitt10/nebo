@@ -71,7 +71,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 func getRep(url string) (string, error) {
 	// TODO sanatize input to prevent accidental SQL injection from people in our slack.
-	q := "SELECT Name FROM User WHERE id IN (SELECT CS_Manager__c FROM Account WHERE Website like '%" + url + "')"
+	q := "SELECT Website, CS_Manager__r.Name FROM Account WHERE Website like '%" + url + "'"
 	result, err := client.Query(q)
 	if err != nil {
 		return "", err
@@ -79,7 +79,7 @@ func getRep(url string) (string, error) {
 
 	name := "unknown"
 	for _, record := range result.Records {
-		name = fmt.Sprintf("%s", record["Name"])
+		name = fmt.Sprintf("%s", record["Website"]) + ": " + fmt.Sprintf("%s", record["CS_Manager__r"])
 	}
 	return name, nil
 }
