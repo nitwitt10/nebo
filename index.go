@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/nlopes/slack"
 	"github.com/simpleforce/simpleforce"
@@ -29,7 +31,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	if !s.ValidateToken(slackVerificationCode) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("slack verification failed"))
+		w.Write([]byte("slack verification failed:"))
 		return
 	}
 
@@ -38,7 +40,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	if client == nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte("salesforce client was not created successfully"))
 		return
 	}
 
@@ -51,37 +53,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	switch s.Command {
 	case "/rep":
-		rep, err := getRep(s.Text)
+		responseJSON, err := getRep(s.Text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
 		w.Header().Set("Content-type", "application/json")
-		w.Write([]byte(`{
-			"response_type": "in_channel",
-			"text": "Rep: ` + rep + `"
-		}`))
+		w.Write([]byte(responseJSON))
+		return
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-}
-
-func getRep(url string) (string, error) {
-	// TODO sanatize input to prevent accidental SQL injection from people in our slack.
-	q := "SELECT Website, CS_Manager__r.Name FROM Account WHERE Website like '%" + url + "'"
-	result, err := client.Query(q)
-	if err != nil {
-		return "", err
-	}
-
-	name := "unknown"
-	for _, record := range result.Records {
-		name = fmt.Sprintf("%s", record["Website"]) + ": " + fmt.Sprintf("%s", record["CS_Manager__r"])
-	}
-	return name, nil
 }
 
 func getEnvironmentValues() (string, string, string, string, string, error) {
@@ -105,4 +90,82 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 		os.Getenv("SF_USER"),
 		os.Getenv("SF_PASSWORD"),
 		os.Getenv("SF_TOKEN"), nil
+}
+
+type accountInfo struct {
+	Website string
+	Manager string
+}
+
+func getRep(search string) (string, error) {
+	q := "SELECT Website, CS_Manager__r.Name FROM Account WHERE Website like '%" + search + "%'"
+	result, err := client.Query(q)
+	if err != nil {
+		return "", err
+	}
+	accounts := []*accountInfo{}
+	for _, record := range result.Records {
+		manager := record["CS_Manager__r"]
+		managerName := "unknown"
+		if manager != nil {
+			if mapName, ok := (manager.(map[string]interface{}))["Name"]; ok {
+				managerName = fmt.Sprintf("%s", mapName)
+			}
+		}
+		accounts = append(accounts, &accountInfo{
+			Website: fmt.Sprintf("%s", record["Website"]),
+			Manager: fmt.Sprintf("%s", managerName),
+		})
+	}
+	accounts = cleanAndSort(accounts)
+	responseJSON := formatAccountInfos(accounts, search)
+	return responseJSON, nil
+}
+
+// example formatting here: https://api.slack.com/reference/messaging/attachments
+func formatAccountInfos(accountInfos []*accountInfo, search string) string {
+	initialText := "Reps for search: " + search
+	if len(accountInfos) == 0 {
+		initialText = "No results for: " + search
+	}
+	result := `{
+		"response_type": "in_channel",
+		"text": "` + initialText + `",
+		"attachments": [`
+	for _, ai := range accountInfos {
+		color := "3A23AD" // Searchspring purple
+		if ai.Manager == "unknown" {
+			color = "FF0000" // red
+		}
+		result += `{
+			"color":"#` + color + `", 
+			"text":"` + ai.Manager + `",
+			"author_name": "` + ai.Website + `"
+		},`
+	}
+	result += `
+		]
+	 }
+	 `
+	return result
+}
+
+func cleanAndSort(accounts []*accountInfo) []*accountInfo {
+	for _, account := range accounts {
+		w := account.Website
+		if strings.HasPrefix(w, "http://") || strings.HasPrefix(w, "https://") {
+			w = w[strings.Index(w, ":")+3:]
+		}
+		if strings.HasPrefix(w, "www.") {
+			w = w[4:]
+		}
+		if strings.HasSuffix(w, "/") {
+			w = w[0 : len(w)-1]
+		}
+		account.Website = w
+	}
+	sort.Slice(accounts, func(i, j int) bool {
+		return len(accounts[i].Website) < len(accounts[j].Website)
+	})
+	return accounts
 }
