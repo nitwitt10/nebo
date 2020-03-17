@@ -115,8 +115,8 @@ func getRep(search string) (string, error) {
 			}
 		}
 		platform := "unknown"
-		if record["Platform_c"] != nil {
-			platform = fmt.Sprintf("%s", record["Platform_c"])
+		if record["Platform__c"] != nil {
+			platform = fmt.Sprintf("%s", record["Platform__c"])
 		}
 		mrr := float64(-1)
 		if record["Chargify_MRR__c"] != nil {
