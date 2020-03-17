@@ -96,10 +96,11 @@ type accountInfo struct {
 	Website string
 	Manager string
 	MRR     float64
+	Platform string	
 }
 
 func getRep(search string) (string, error) {
-	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + search + "%'"
+	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + search + "%'"
 	result, err := client.Query(q)
 	if err != nil {
 		return "", err
@@ -121,6 +122,8 @@ func getRep(search string) (string, error) {
 			Website: fmt.Sprintf("%s", record["Website"]),
 			Manager: fmt.Sprintf("%s", managerName),
 			MRR:     mrr,
+			Platform: fmt.Sprintf("%s", record["Platform_cc"]),
+			
 		})
 	}
 	accounts = cleanAndSort(accounts)
@@ -149,7 +152,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"Rep: ` + ai.Manager + ` - MRR: ` + mrr + `",
+			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
