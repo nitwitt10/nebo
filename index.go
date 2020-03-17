@@ -98,7 +98,7 @@ type accountInfo struct {
 }
 
 func getRep(search string) (string, error) {
-	q := "SELECT Website, CS_Manager__r.Name FROM Account WHERE Website like '%" + search + "%'"
+	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + search + "%'"
 	result, err := client.Query(q)
 	if err != nil {
 		return "", err
@@ -115,6 +115,7 @@ func getRep(search string) (string, error) {
 		accounts = append(accounts, &accountInfo{
 			Website: fmt.Sprintf("%s", record["Website"]),
 			Manager: fmt.Sprintf("%s", managerName),
+			MRR: fmt.Sprintf("%s", record["Chargify_MRR__c"],
 		})
 	}
 	accounts = cleanAndSort(accounts)
@@ -139,7 +140,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"` + ai.Manager + `",
+			"text":"` + ai.Manager + ` - MRR: $` + ai.MRR + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
