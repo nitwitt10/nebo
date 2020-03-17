@@ -95,7 +95,7 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 type accountInfo struct {
 	Website string
 	Manager string
-	MRR     string
+	MRR     float64
 }
 
 func getRep(search string) (string, error) {
@@ -113,10 +113,14 @@ func getRep(search string) (string, error) {
 				managerName = fmt.Sprintf("%s", mapName)
 			}
 		}
+		mrr := float64(-1)
+		if record["Chargify_MRR__c"] != nil {
+			mrr = record["Chargify_MRR__c"].(float64)
+		}
 		accounts = append(accounts, &accountInfo{
 			Website: fmt.Sprintf("%s", record["Website"]),
 			Manager: fmt.Sprintf("%s", managerName),
-			MRR:     fmt.Sprintf("%s", record["Chargify_MRR__c"]),
+			MRR:     mrr,
 		})
 	}
 	accounts = cleanAndSort(accounts)
@@ -139,9 +143,13 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		if ai.Manager == "unknown" {
 			color = "FF0000" // red
 		}
+		mrr := "unknown"
+		if ai.MRR != -1 {
+			mrr = fmt.Sprintf("$%.2f", ai.MRR)
+		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"` + ai.Manager + ` - MRR: $` + ai.MRR + `",
+			"text":"Rep: ` + ai.Manager + ` - MRR: ` + mrr + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
