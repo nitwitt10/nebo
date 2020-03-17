@@ -95,6 +95,7 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 type accountInfo struct {
 	Website string
 	Manager string
+	MRR     string
 }
 
 func getRep(search string) (string, error) {
@@ -115,7 +116,7 @@ func getRep(search string) (string, error) {
 		accounts = append(accounts, &accountInfo{
 			Website: fmt.Sprintf("%s", record["Website"]),
 			Manager: fmt.Sprintf("%s", managerName),
-			MRR: fmt.Sprintf("%s", record["Chargify_MRR__c"],
+			MRR:     fmt.Sprintf("%s", record["Chargify_MRR__c"]),
 		})
 	}
 	accounts = cleanAndSort(accounts)
