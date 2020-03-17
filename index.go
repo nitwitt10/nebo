@@ -122,7 +122,7 @@ func getRep(search string) (string, error) {
 			Website: fmt.Sprintf("%s", record["Website"]),
 			Manager: fmt.Sprintf("%s", managerName),
 			MRR:     mrr,
-			Platform: fmt.Sprintf("%s", record["Platform_cc"]),
+			Platform: fmt.Sprintf("%s", record["Platform__c"]),
 			
 		})
 	}
