@@ -93,10 +93,10 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 }
 
 type accountInfo struct {
-	Website string
-	Manager string
-	MRR     float64
-	Platform string	
+	Website  string
+	Manager  string
+	MRR      float64
+	Platform string
 }
 
 func getRep(search string) (string, error) {
@@ -114,16 +114,20 @@ func getRep(search string) (string, error) {
 				managerName = fmt.Sprintf("%s", mapName)
 			}
 		}
+		platform := "unknown"
+		if record["Platform_c"] != nil {
+			platform = fmt.Sprintf("%s", record["Platform_c"])
+		}
 		mrr := float64(-1)
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
 		}
+
 		accounts = append(accounts, &accountInfo{
-			Website: fmt.Sprintf("%s", record["Website"]),
-			Manager: fmt.Sprintf("%s", managerName),
-			MRR:     mrr,
-			Platform: fmt.Sprintf("%s", record["Platform_cc"]),
-			
+			Website:  fmt.Sprintf("%s", record["Website"]),
+			Manager:  fmt.Sprintf("%s", managerName),
+			MRR:      mrr,
+			Platform: platform,
 		})
 	}
 	accounts = cleanAndSort(accounts)
@@ -137,7 +141,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 	if len(accountInfos) == 0 {
 		initialText = "No results for: " + search
 	}
-	result := `{
+	result := `{ 
 		"response_type": "in_channel",
 		"text": "` + initialText + `",
 		"attachments": [`
