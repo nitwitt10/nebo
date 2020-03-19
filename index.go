@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"regexp"
 
 	"github.com/nlopes/slack"
 	"github.com/simpleforce/simpleforce"
@@ -100,7 +101,14 @@ type accountInfo struct {
 }
 
 func getRep(search string) (string, error) {
-	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + search + "%'"
+	
+	reg, err := regexp.Compile("[^a-zA-Z0-9_.-]+")
+	if err != nil {
+		return "", err
+	}
+	sanitized := reg.ReplaceAllString(string, "")
+	
+	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + sanitized + "%'"
 	result, err := client.Query(q)
 	if err != nil {
 		return "", err
