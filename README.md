@@ -1,10 +1,10 @@
 # slackbot-go
 
-Say hello to Nebu (Nebulous Cloud Being)
+Say hello to Nebo (Nebulous Cloud Being)
 
 <img style="border-radius: 20px; box-shadow: 3px 3px 5px 0px rgba(173,154,173,1);" src="https://www.gravatar.com/avatar/1abed234f87b8153b2cda61601fbb1f9.jpg">
 
-Nebu is a slackbot that helps us ask salesforce questions without having to go into salesforce.
+Nebo is a slackbot that helps us ask salesforce questions without having to go into salesforce.
 
 ## Usage
 
