@@ -53,7 +53,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch s.Command {
-	case "/rep":
+	case "/rep", "/nebo-alpha":
 		responseJSON, err := getRep(s.Text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -66,6 +66,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("unknown slash command " + s.Command))
 		return
 	}
 }
@@ -90,7 +91,8 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 		os.Getenv("SF_URL"),
 		os.Getenv("SF_USER"),
 		os.Getenv("SF_PASSWORD"),
-		os.Getenv("SF_TOKEN"), nil
+		os.Getenv("SF_TOKEN"),
+		nil
 }
 
 type accountInfo struct {
@@ -101,15 +103,16 @@ type accountInfo struct {
 }
 
 func getRep(search string) (string, error) {
-
 	reg, err := regexp.Compile("[^a-zA-Z0-9_.-]+")
 	if err != nil {
 		return "", err
 	}
+
 	sanitized := reg.ReplaceAllString(search, "")
 
 	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + sanitized + "%'"
 	result, err := client.Query(q)
+
 	if err != nil {
 		return "", err
 	}
