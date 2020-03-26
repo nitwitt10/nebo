@@ -99,6 +99,7 @@ type accountInfo struct {
 	Website  string
 	Manager  string
 	MRR      float64
+	FamilyMRR float64
 	Platform string
 }
 
@@ -110,7 +111,7 @@ func getRep(search string) (string, error) {
 
 	sanitized := reg.ReplaceAllString(search, "")
 
-	q := "SELECT Website, CS_Manager__r.Name, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + sanitized + "%'"
+	q := "SELECT Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + sanitized + "%'"
 	result, err := client.Query(q)
 
 	if err != nil {
@@ -133,11 +134,16 @@ func getRep(search string) (string, error) {
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
 		}
+		familymrr := float64(-1)
+		if record["Family_MRR__c"] != nil {
+			familymrr = record["Family_MRR__c"].(float64)
+		}
 
 		accounts = append(accounts, &accountInfo{
 			Website:  fmt.Sprintf("%s", record["Website"]),
 			Manager:  fmt.Sprintf("%s", managerName),
 			MRR:      mrr,
+			FamilyMRR: familymrr,
 			Platform: platform,
 		})
 	}
@@ -165,9 +171,13 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		if ai.MRR != -1 {
 			mrr = fmt.Sprintf("$%.2f", ai.MRR)
 		}
+		familymrr := "unknown"
+		if ai.FamilyMRR != -1 {
+			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
+		}		
 		result += `{
 			"color":"#` + color + `", 
-			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `",
+			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
