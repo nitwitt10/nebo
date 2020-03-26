@@ -96,11 +96,11 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 }
 
 type accountInfo struct {
-	Website  string
-	Manager  string
-	MRR      float64
+	Website   string
+	Manager   string
+	MRR       float64
 	FamilyMRR float64
-	Platform string
+	Platform  string
 }
 
 func getRep(search string) (string, error) {
@@ -140,11 +140,11 @@ func getRep(search string) (string, error) {
 		}
 
 		accounts = append(accounts, &accountInfo{
-			Website:  fmt.Sprintf("%s", record["Website"]),
-			Manager:  fmt.Sprintf("%s", managerName),
-			MRR:      mrr,
+			Website:   fmt.Sprintf("%s", record["Website"]),
+			Manager:   fmt.Sprintf("%s", managerName),
+			MRR:       mrr,
 			FamilyMRR: familymrr,
-			Platform: platform,
+			Platform:  platform,
 		})
 	}
 	accounts = cleanAndSort(accounts)
@@ -174,7 +174,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		familymrr := "unknown"
 		if ai.FamilyMRR != -1 {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
-		}		
+		}
 		result += `{
 			"color":"#` + color + `", 
 			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `",
