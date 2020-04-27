@@ -98,6 +98,7 @@ func getEnvironmentValues() (string, string, string, string, string, error) {
 type accountInfo struct {
 	Website   string
 	Manager   string
+	Active    string
 	MRR       float64
 	FamilyMRR float64
 	Platform  string
@@ -111,7 +112,7 @@ func getRep(search string) (string, error) {
 
 	sanitized := reg.ReplaceAllString(search, "")
 
-	q := "SELECT Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c FROM Account WHERE Type = 'Customer' AND Website LIKE '%" + sanitized + "%'"
+	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c FROM Account WHERE Type IN ('Customer', 'Inactive Customer') AND Website LIKE '%" + sanitized + "%'"
 	result, err := client.Query(q)
 
 	if err != nil {
@@ -125,6 +126,11 @@ func getRep(search string) (string, error) {
 			if mapName, ok := (manager.(map[string]interface{}))["Name"]; ok {
 				managerName = fmt.Sprintf("%s", mapName)
 			}
+		}
+		Type := record["Type"]
+		active := "Y"
+		if Type != "Customer" {
+			active = "N"			}
 		}
 		platform := "unknown"
 		if record["Platform__c"] != nil {
@@ -142,6 +148,7 @@ func getRep(search string) (string, error) {
 		accounts = append(accounts, &accountInfo{
 			Website:   fmt.Sprintf("%s", record["Website"]),
 			Manager:   fmt.Sprintf("%s", managerName),
+			Active:    fmt.Sprintf("%s", active),
 			MRR:       mrr,
 			FamilyMRR: familymrr,
 			Platform:  platform,
@@ -177,7 +184,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `",
+			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.active + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
