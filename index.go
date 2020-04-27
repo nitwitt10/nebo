@@ -184,7 +184,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `",
+			"text":" Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
