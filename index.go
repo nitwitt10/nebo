@@ -128,9 +128,9 @@ func getRep(search string) (string, error) {
 			}
 		}
 		Type := record["Type"]
-		active := "Y"
+		active := "Yes"
 		if Type != "Customer" {
-			active = "N"			}
+			active = "Not active"
 		}
 		platform := "unknown"
 		if record["Platform__c"] != nil {
@@ -184,7 +184,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.active + `",
+			"text":"Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
