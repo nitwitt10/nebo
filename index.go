@@ -182,9 +182,15 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		if ai.FamilyMRR != -1 {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
+		text := ""
+		if (familymrr != mrr) {
+			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"
+		} else {
+			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"		
+		}
 		result += `{
 			"color":"#` + color + `", 
-			"text":" Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `",
+			"text":"` + text + `",
 			"author_name": "` + ai.Website + `"
 		},`
 	}
