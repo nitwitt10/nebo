@@ -184,9 +184,9 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		}
 		text := ""
 		if familymrr != mrr {
-			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"
+			text = `Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active 
 		} else {
-			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"
+			text = `Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active 
 		}
 		result += `{
 			"color":"#` + color + `", 
