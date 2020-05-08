@@ -53,7 +53,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch s.Command {
-	case "/rep", "/nebo-alpha":
+	case "/rep", "/nebo-alpha", "/nebo":
 		responseJSON, err := getRep(s.Text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -183,10 +183,10 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
 		text := ""
-		if (familymrr != mrr) {
+		if familymrr != mrr {
 			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"
 		} else {
-			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"		
+			text = "Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active + `"
 		}
 		result += `{
 			"color":"#` + color + `", 
