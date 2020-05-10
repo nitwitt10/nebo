@@ -1,0 +1,50 @@
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/nlopes/slack"
+	"github.com/simpleforce/simpleforce"
+	"github.com/stretchr/testify/require"
+)
+
+type salesforceDAOTest struct{}
+
+func (s *salesforceDAOTest) Query(query string) (*simpleforce.QueryResult, error) {
+	qr := &simpleforce.QueryResult{}
+	err := json.Unmarshal([]byte(`{ "totalSize": 1,
+		"done": true,
+		"records": [{
+				"Website": "fabletics.com",
+				"CS_Manager__r": { "Name": "Ashley Hilton" },
+				"Family_MRR__c": 14858.54,
+				"Chargify_MRR__c": 3955.17,
+				"Platform__c":"Custom"} 
+			]
+		}`), qr)
+	return qr, err
+}
+
+func TestFormatAccountInfos(t *testing.T) {
+	response, err := getResponse(&salesforceDAOTest{}, "search term")
+	require.Nil(t, err)
+	msg := &slack.Msg{}
+	err = json.Unmarshal(response, msg)
+	require.Nil(t, err)
+	fmt.Println(c(json.Marshal(msg)))
+	require.True(t, strings.Contains(msg.Text, "search term"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Rep: Ashley Hilton"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "MRR: $3955.17"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Platform: Custom"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Family MRR: $14858.54"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Active: Not active"))
+	require.Equal(t, "fabletics.com", msg.Attachments[0].AuthorName)
+	require.Equal(t, "#3A23AD", msg.Attachments[0].Color)
+}
+
+func c(b []byte, e error) string {
+	return string(b)
+}
