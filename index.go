@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,10 +13,37 @@ import (
 	"github.com/simpleforce/simpleforce"
 )
 
-var client *simpleforce.Client
+type SalesForceDAO interface {
+	Query(query string) (*simpleforce.QueryResult, error)
+}
+
+type SalesForceDAOImpl struct {
+	Client *simpleforce.Client
+}
+
+func (s *SalesForceDAOImpl) Query(query string) (*simpleforce.QueryResult, error) {
+	return s.Client.Query(query)
+}
+
+var salesForceDAO SalesForceDAO = nil
+
+func NewSalesForceDAO(sfURL string, sfUser string, sfPassword string, sfToken string) (SalesForceDAO, error) {
+	client := simpleforce.NewClient(sfURL, simpleforce.DefaultClientID, simpleforce.DefaultAPIVersion)
+	if client == nil {
+		return nil, fmt.Errorf("nil returned from client creation")
+	}
+	err := client.LoginPassword(sfUser, sfPassword, sfToken)
+	if err != nil {
+		return nil, err
+	}
+	return &SalesForceDAOImpl{
+		Client: client,
+	}, nil
+}
 
 // Handler - check routing and call correct methods
 func Handler(w http.ResponseWriter, r *http.Request) {
+
 	slackVerificationCode, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -36,32 +64,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if client == nil {
-		client = simpleforce.NewClient(sfURL, simpleforce.DefaultClientID, simpleforce.DefaultAPIVersion)
-	}
-	if client == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("salesforce client was not created successfully"))
-		return
-	}
-
-	err = client.LoginPassword(sfUser, sfPassword, sfToken)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+	if salesForceDAO == nil {
+		salesForceDAO, err = NewSalesForceDAO(sfURL, sfUser, sfPassword, sfToken)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("salesforce client was not created successfully: " + err.Error()))
+			return
+		}
 	}
 
 	switch s.Command {
 	case "/rep", "/nebo-alpha", "/nebo":
-		responseJSON, err := getRep(s.Text)
+		responseJSON, err := getResponse(salesForceDAO, s.Text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
 		w.Header().Set("Content-type", "application/json")
-		w.Write([]byte(responseJSON))
+		w.Write(responseJSON)
 		return
 
 	default:
@@ -104,19 +125,19 @@ type accountInfo struct {
 	Platform  string
 }
 
-func getRep(search string) (string, error) {
+func getResponse(sfDAO SalesForceDAO, search string) ([]byte, error) {
 	reg, err := regexp.Compile("[^a-zA-Z0-9_.-]+")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	sanitized := reg.ReplaceAllString(search, "")
 
 	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c FROM Account WHERE Type IN ('Customer', 'Inactive Customer') AND Website LIKE '%" + sanitized + "%'"
-	result, err := client.Query(q)
+	result, err := sfDAO.Query(q)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	accounts := []*accountInfo{}
 	for _, record := range result.Records {
@@ -155,20 +176,22 @@ func getRep(search string) (string, error) {
 		})
 	}
 	accounts = cleanAndSort(accounts)
-	responseJSON := formatAccountInfos(accounts, search)
-	return responseJSON, nil
+	msg := formatAccountInfos(accounts, search)
+	return json.Marshal(msg)
 }
 
 // example formatting here: https://api.slack.com/reference/messaging/attachments
-func formatAccountInfos(accountInfos []*accountInfo, search string) string {
+func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 	initialText := "Reps for search: " + search
 	if len(accountInfos) == 0 {
 		initialText = "No results for: " + search
 	}
-	result := `{ 
-		"response_type": "in_channel",
-		"text": "` + initialText + `",
-		"attachments": [`
+
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeInChannel,
+		Text:         initialText,
+		Attachments:  []slack.Attachment{},
+	}
 	for _, ai := range accountInfos {
 		color := "3A23AD" // Searchspring purple
 		if ai.Manager == "unknown" {
@@ -182,23 +205,14 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) string {
 		if ai.FamilyMRR != -1 {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
-		text := ""
-		if familymrr != mrr {
-			text = `Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Family MRR: ` + familymrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active 
-		} else {
-			text = `Rep: ` + ai.Manager + `\n MRR: ` + mrr + `\n Platform: ` + ai.Platform + `\n Active: ` + ai.Active 
-		}
-		result += `{
-			"color":"#` + color + `", 
-			"text":"` + text + `",
-			"author_name": "` + ai.Website + `"
-		},`
+		text := `Rep: ` + ai.Manager + `\nMRR: ` + mrr + `\nFamily MRR: ` + familymrr + `\nPlatform: ` + ai.Platform + `\nActive: ` + ai.Active
+		msg.Attachments = append(msg.Attachments, slack.Attachment{
+			Color:      "#" + color,
+			Text:       text,
+			AuthorName: ai.Website,
+		})
 	}
-	result += `
-		]
-	 }
-	 `
-	return result
+	return msg
 }
 
 func cleanAndSort(accounts []*accountInfo) []*accountInfo {
