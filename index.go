@@ -13,6 +13,17 @@ import (
 	"github.com/simpleforce/simpleforce"
 )
 
+var platforms = []string{"Yahoo",
+	"CommerceV3",
+	"Magento",
+	"3dcart",
+	"Netsuite",
+	"BigCommerce",
+	"Other",
+	"Miva",
+	"Custom",
+	"Shopify"}
+
 type SalesForceDAO interface {
 	Query(query string) (*simpleforce.QueryResult, error)
 }
@@ -43,7 +54,6 @@ func NewSalesForceDAO(sfURL string, sfUser string, sfPassword string, sfToken st
 
 // Handler - check routing and call correct methods
 func Handler(w http.ResponseWriter, r *http.Request) {
-
 	slackVerificationCode, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -74,7 +84,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch s.Command {
-	case "/rep", "/nebo-alpha", "/nebo":
+	case "/rep", "/alpha-nebo", "/nebo":
 		responseJSON, err := getResponse(salesForceDAO, s.Text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -133,7 +143,9 @@ func getResponse(sfDAO SalesForceDAO, search string) ([]byte, error) {
 
 	sanitized := reg.ReplaceAllString(search, "")
 
-	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c FROM Account WHERE Type IN ('Customer', 'Inactive Customer') AND Website LIKE '%" + sanitized + "%'"
+	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c " +
+		"FROM Account WHERE Type IN ('Customer', 'Inactive Customer') " +
+		"AND (Website LIKE '%" + sanitized + "%' OR Platform__c LIKE '%" + sanitized + "%') ORDER BY Chargify_MRR__c DESC"
 	result, err := sfDAO.Query(q)
 
 	if err != nil {
@@ -158,6 +170,7 @@ func getResponse(sfDAO SalesForceDAO, search string) ([]byte, error) {
 			platform = fmt.Sprintf("%s", record["Platform__c"])
 		}
 		mrr := float64(-1)
+		fmt.Println(fmt.Sprintf("%s", record["Website"]), record["Chargify_MRR__c"])
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
 		}
@@ -175,9 +188,32 @@ func getResponse(sfDAO SalesForceDAO, search string) ([]byte, error) {
 			Platform:  platform,
 		})
 	}
-	accounts = cleanAndSort(accounts)
+	accounts = cleanAccounts(accounts)
+	if !isPlatformSearch(search) {
+		accounts = sortAccounts(accounts)
+	}
+	accounts = truncateAccounts(accounts)
 	msg := formatAccountInfos(accounts, search)
 	return json.Marshal(msg)
+}
+
+func truncateAccounts(accounts []*accountInfo) []*accountInfo {
+	truncated := []*accountInfo{}
+	for i, account := range accounts {
+		if i == 20 {
+			break
+		}
+		truncated = append(truncated, account)
+	}
+	return truncated
+}
+func isPlatformSearch(search string) bool {
+	for _, platform := range platforms {
+		if strings.ToLower(search) == strings.ToLower(platform) {
+			return true
+		}
+	}
+	return false
 }
 
 // example formatting here: https://api.slack.com/reference/messaging/attachments
@@ -205,7 +241,8 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 		if ai.FamilyMRR != -1 {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
-		text := `Rep: ` + ai.Manager + `\nMRR: ` + mrr + `\nFamily MRR: ` + familymrr + `\nPlatform: ` + ai.Platform + `\nActive: ` + ai.Active
+		mrr = mrr + " (Family MRR: " + familymrr + ")"
+		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active
 		msg.Attachments = append(msg.Attachments, slack.Attachment{
 			Color:      "#" + color,
 			Text:       text,
@@ -215,7 +252,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 	return msg
 }
 
-func cleanAndSort(accounts []*accountInfo) []*accountInfo {
+func cleanAccounts(accounts []*accountInfo) []*accountInfo {
 	for _, account := range accounts {
 		w := account.Website
 		if strings.HasPrefix(w, "http://") || strings.HasPrefix(w, "https://") {
@@ -229,6 +266,9 @@ func cleanAndSort(accounts []*accountInfo) []*accountInfo {
 		}
 		account.Website = w
 	}
+	return accounts
+}
+func sortAccounts(accounts []*accountInfo) []*accountInfo {
 	sort.Slice(accounts, func(i, j int) bool {
 		return len(accounts[i].Website) < len(accounts[j].Website)
 	})
