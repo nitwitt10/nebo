@@ -1,4 +1,4 @@
-# slackbot-go
+# Nebo
 
 Say hello to Nebo (Nebulous Cloud Being)
 
