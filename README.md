@@ -8,7 +8,11 @@ Nebo is a slackbot that helps us ask salesforce questions without having to go i
 
 ## Usage
 
-`/rep shoes.com`
+`/nebo shoes.com`
+
+or 
+
+`/nebo shopify`
 
 ## Development
 
