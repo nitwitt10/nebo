@@ -1,4 +1,4 @@
-# slackbot-go
+# Nebo
 
 Say hello to Nebo (Nebulous Cloud Being)
 
@@ -8,8 +8,10 @@ Nebo is a slackbot that helps us ask salesforce questions without having to go i
 
 ## Usage
 
-`/rep shoes.com`
-`/rep bigcommerce`
+`/nebo shoes.com`
+
+`/nebo bigcommerce`
+
 `/feature i want this feature please`
 
 ## Development
