@@ -54,7 +54,7 @@ func NewSalesForceDAO(sfURL string, sfUser string, sfPassword string, sfToken st
 
 // Handler - check routing and call correct methods
 func Handler(w http.ResponseWriter, r *http.Request) {
-	slackVerificationCode, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
+	slackVerificationCode, slackOauthToken, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -95,30 +95,60 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.Write(responseJSON)
 		return
 
+	case "/feature":
+		responseJSON := featureResponse(s.Text)
+		sendSlackMessage(slackOauthToken, s.Text, s.UserID)
+		w.Header().Set("Content-type", "application/json")
+		w.Write(responseJSON)
+		return
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("unknown slash command " + s.Command))
+
 		return
 	}
 }
+func sendSlackMessage(token string, text string, authorID string) {
+	api := slack.New(token)
+	channelID, timestamp, err := api.PostMessage("G013YLWL3EX", slack.MsgOptionText("<@"+authorID+"> requests: "+text, false))
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		return
+	}
+	fmt.Printf("Message successfully sent to channel %s at %s", channelID, timestamp)
+}
 
-func getEnvironmentValues() (string, string, string, string, string, error) {
+// example formatting here: https://api.slack.com/reference/messaging/attachments
+func featureResponse(search string) []byte {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeEphemeral,
+		Text:         "feature request submitted, we'll be in touch!",
+	}
+	json, _ := json.Marshal(msg)
+	return json
+}
+
+func getEnvironmentValues() (string, string, string, string, string, string, error) {
 	if os.Getenv("SLACK_VERIFICATION_TOKEN") == "" {
-		return "", "", "", "", "", fmt.Errorf("Must set: SLACK_VERIFICATION_TOKEN")
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_VERIFICATION_TOKEN")
+	}
+	if os.Getenv("SLACK_OAUTH_TOKEN") == "" {
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_OAUTH_TOKEN")
 	}
 	if os.Getenv("SF_URL") == "" {
-		return "", "", "", "", "", fmt.Errorf("Must set: SF_URL")
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_URL")
 	}
 	if os.Getenv("SF_USER") == "" {
-		return "", "", "", "", "", fmt.Errorf("Must set: SF_USER")
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_USER")
 	}
 	if os.Getenv("SF_PASSWORD") == "" {
-		return "", "", "", "", "", fmt.Errorf("Must set: SF_PASSWORD")
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_PASSWORD")
 	}
 	if os.Getenv("SF_TOKEN") == "" {
-		return "", "", "", "", "", fmt.Errorf("Must set: SF_TOKEN")
+		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_TOKEN")
 	}
 	return os.Getenv("SLACK_VERIFICATION_TOKEN"),
+		os.Getenv("SLACK_OAUTH_TOKEN"),
 		os.Getenv("SF_URL"),
 		os.Getenv("SF_USER"),
 		os.Getenv("SF_PASSWORD"),
