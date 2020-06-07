@@ -55,7 +55,7 @@ func NewSalesForceDAO(sfURL string, sfUser string, sfPassword string, sfToken st
 }
 
 // Handler - check routing and call correct methods
-func Handler(res http.ResponseWriter, r *http.Request) {
+func Handler(res http.ResponseWriter, req *http.Request) {
 	slackVerificationCode, slackOauthToken, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func Handler(res http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := slack.SlashCommandParse(r)
+	s, err := slack.SlashCommandParse(req)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte(err.Error()))
