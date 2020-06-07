@@ -13,16 +13,18 @@ import (
 	"github.com/simpleforce/simpleforce"
 )
 
-var platforms = []string{"Yahoo",
-	"CommerceV3",
-	"Magento",
+var platforms = []string{
 	"3dcart",
-	"Netsuite",
 	"BigCommerce",
-	"Other",
-	"Miva",
+	"CommerceV3",
 	"Custom",
-	"Shopify"}
+	"Magento",
+	"Miva",
+	"Netsuite",
+	"Other",
+	"Shopify",
+	"Yahoo",
+}
 
 type SalesForceDAO interface {
 	Query(query string) (*simpleforce.QueryResult, error)
@@ -53,61 +55,90 @@ func NewSalesForceDAO(sfURL string, sfUser string, sfPassword string, sfToken st
 }
 
 // Handler - check routing and call correct methods
-func Handler(w http.ResponseWriter, r *http.Request) {
+func Handler(res http.ResponseWriter, req *http.Request) {
 	slackVerificationCode, slackOauthToken, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte(err.Error()))
 		return
 	}
 
-	s, err := slack.SlashCommandParse(r)
+	s, err := slack.SlashCommandParse(req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte(err.Error()))
 		return
 	}
 
 	if !s.ValidateToken(slackVerificationCode) {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("slack verification failed:"))
+		res.WriteHeader(http.StatusUnauthorized)
+		res.Write([]byte("slack verification failed:"))
 		return
 	}
 
 	if salesForceDAO == nil {
 		salesForceDAO, err = NewSalesForceDAO(sfURL, sfUser, sfPassword, sfToken)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("salesforce client was not created successfully: " + err.Error()))
+			res.WriteHeader(http.StatusInternalServerError)
+			res.Write([]byte("salesforce client was not created successfully: " + err.Error()))
 			return
 		}
 	}
 
 	switch s.Command {
 	case "/rep", "/alpha-nebo", "/nebo":
-		responseJSON, err := getResponse(salesForceDAO, s.Text)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
+			writeHelpNebo(res)
 			return
 		}
-		w.Header().Set("Content-type", "application/json")
-		w.Write(responseJSON)
+		responseJSON, err := getResponse(salesForceDAO, s.Text)
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			res.Write([]byte(err.Error()))
+			return
+		}
+		res.Header().Set("Content-type", "application/json")
+		res.Write(responseJSON)
 		return
 
 	case "/feature":
+		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
+			writeHelpFeature(res)
+			return
+		}
 		responseJSON := featureResponse(s.Text)
 		sendSlackMessage(slackOauthToken, s.Text, s.UserID)
-		w.Header().Set("Content-type", "application/json")
-		w.Write(responseJSON)
+		res.Header().Set("Content-type", "application/json")
+		res.Write(responseJSON)
 		return
 	default:
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("unknown slash command " + s.Command))
-
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte("unknown slash command " + s.Command))
 		return
 	}
 }
+
+func writeHelpFeature(res http.ResponseWriter) {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeEphemeral,
+		Text:         "Feature usage:\n`/feature description of feature required` - submits a feature to the product team\n`/feature help` - this message",
+	}
+	json, _ := json.Marshal(msg)
+	res.Header().Set("Content-type", "application/json")
+	res.Write(json)
+}
+func writeHelpNebo(res http.ResponseWriter) {
+	platformsJoined := strings.ToLower(strings.Join(platforms, ", "))
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeEphemeral,
+		Text:         "Nebo usage:\n`/nebo shoes` - find all customers with shoe in the name\n`/nebo shopify` - show {" + platformsJoined + "} clients sorted by MRR\n`/nebo help` - this message",
+	}
+	json, _ := json.Marshal(msg)
+	res.Header().Set("Content-type", "application/json")
+	res.Write(json)
+
+}
+
 func sendSlackMessage(token string, text string, authorID string) {
 	api := slack.New(token)
 	channelID, timestamp, err := api.PostMessage("G013YLWL3EX", slack.MsgOptionText("<@"+authorID+"> requests: "+text, false))
@@ -118,7 +149,6 @@ func sendSlackMessage(token string, text string, authorID string) {
 	fmt.Printf("Message successfully sent to channel %s at %s", channelID, timestamp)
 }
 
-// example formatting here: https://api.slack.com/reference/messaging/attachments
 func featureResponse(search string) []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeEphemeral,
