@@ -11,6 +11,7 @@ import (
 
 	"github.com/nlopes/slack"
 	"github.com/simpleforce/simpleforce"
+	"github.com/tjarratt/babble"
 )
 
 var platforms = []string{
@@ -111,6 +112,16 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("Content-type", "application/json")
 		res.Write(responseJSON)
 		return
+
+	case "/meet":
+		if strings.TrimSpace(s.Text) == "help" {
+			writeHelpMeet(res)
+			return
+		}
+		responseJSON := meetResponse(s.Text)
+		res.Header().Set("Content-type", "application/json")
+		res.Write(responseJSON)
+		return
 	default:
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte("unknown slash command " + s.Command))
@@ -127,6 +138,7 @@ func writeHelpFeature(res http.ResponseWriter) {
 	res.Header().Set("Content-type", "application/json")
 	res.Write(json)
 }
+
 func writeHelpNebo(res http.ResponseWriter) {
 	platformsJoined := strings.ToLower(strings.Join(platforms, ", "))
 	msg := &slack.Msg{
@@ -136,7 +148,16 @@ func writeHelpNebo(res http.ResponseWriter) {
 	json, _ := json.Marshal(msg)
 	res.Header().Set("Content-type", "application/json")
 	res.Write(json)
+}
 
+func writeHelpMeet(res http.ResponseWriter) {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeEphemeral,
+		Text:         "Meet usage:\n`/meet` - generate a random meet\n`/meet name` - generate a meet with a name\n`/meet help` - this message",
+	}
+	json, _ := json.Marshal(msg)
+	res.Header().Set("Content-type", "application/json")
+	res.Write(json)
 }
 
 func sendSlackMessage(token string, text string, authorID string) {
@@ -153,6 +174,21 @@ func featureResponse(search string) []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeEphemeral,
 		Text:         "feature request submitted, we'll be in touch!",
+	}
+	json, _ := json.Marshal(msg)
+	return json
+}
+
+func meetResponse(search string) []byte {
+	name := search
+	name = strings.ReplaceAll(name, " ", "-")
+	if strings.TrimSpace(search) == "" {
+		babbler := babble.NewBabbler()
+		name = babbler.Babble()
+	}
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeInChannel,
+		Text:         "g.co/meet/" + name,
 	}
 	json, _ := json.Marshal(msg)
 	return json
