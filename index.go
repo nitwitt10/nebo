@@ -3,15 +3,17 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
+	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/nlopes/slack"
 	"github.com/simpleforce/simpleforce"
-	"github.com/tjarratt/babble"
 )
 
 var platforms = []string{
@@ -183,8 +185,8 @@ func meetResponse(search string) []byte {
 	name := search
 	name = strings.ReplaceAll(name, " ", "-")
 	if strings.TrimSpace(search) == "" {
-		babbler := babble.NewBabbler()
-		name = babbler.Babble()
+		rand.Seed(time.Now().UnixNano())
+		name = petname.Generate(3, "-")
 	}
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
