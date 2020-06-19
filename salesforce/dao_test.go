@@ -1,4 +1,4 @@
-package api
+package salesforce
 
 import (
 	"encoding/json"
@@ -13,9 +13,9 @@ import (
 
 type salesforceDAOTest struct{}
 
-func (s *salesforceDAOTest) Query(query string) (*simpleforce.QueryResult, error) {
+func createQueryResults() *simpleforce.QueryResult {
 	qr := &simpleforce.QueryResult{}
-	err := json.Unmarshal([]byte(`{ "totalSize": 1,
+	json.Unmarshal([]byte(`{ "totalSize": 1,
 		"done": true,
 		"records": [{
 				"Website": "fabletics.com",
@@ -25,11 +25,12 @@ func (s *salesforceDAOTest) Query(query string) (*simpleforce.QueryResult, error
 				"Platform__c":"Custom"} 
 			]
 		}`), qr)
-	return qr, err
+	return qr
 }
 
 func TestFormatAccountInfos(t *testing.T) {
-	response, err := getResponse(&salesforceDAOTest{}, "search term")
+	dao := &DAOImpl{}
+	response, err := dao.ResultToMessage("search term", createQueryResults())
 	require.Nil(t, err)
 	msg := &slack.Msg{}
 	err = json.Unmarshal(response, msg)
