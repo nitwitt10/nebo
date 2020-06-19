@@ -34,7 +34,7 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 
 	if !s.ValidateToken(slackVerificationCode) {
 		res.WriteHeader(http.StatusUnauthorized)
-		res.Write([]byte("slack verification failed:"))
+		res.Write([]byte("slack verification failed"))
 		return
 	}
 
@@ -47,6 +47,7 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	res.Header().Set("Content-type", "application/json")
 	switch s.Command {
 	case "/rep", "/alpha-nebo", "/nebo":
 		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
@@ -59,7 +60,6 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 			res.Write([]byte(err.Error()))
 			return
 		}
-		res.Header().Set("Content-type", "application/json")
 		res.Write(responseJSON)
 		return
 
@@ -68,9 +68,8 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 			writeHelpFeature(res)
 			return
 		}
-		responseJSON := featureResponse(s.Text)
 		sendSlackMessage(slackOauthToken, s.Text, s.UserID)
-		res.Header().Set("Content-type", "application/json")
+		responseJSON := featureResponse(s.Text)
 		res.Write(responseJSON)
 		return
 
@@ -80,9 +79,9 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		responseJSON := meetResponse(s.Text)
-		res.Header().Set("Content-type", "application/json")
 		res.Write(responseJSON)
 		return
+
 	default:
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte("unknown slash command " + s.Command))
@@ -96,7 +95,6 @@ func writeHelpFeature(res http.ResponseWriter) {
 		Text:         "Feature usage:\n`/feature description of feature required` - submits a feature to the product team\n`/feature help` - this message",
 	}
 	json, _ := json.Marshal(msg)
-	res.Header().Set("Content-type", "application/json")
 	res.Write(json)
 }
 
@@ -107,7 +105,6 @@ func writeHelpNebo(res http.ResponseWriter) {
 		Text:         "Nebo usage:\n`/nebo shoes` - find all customers with shoe in the name\n`/nebo shopify` - show {" + platformsJoined + "} clients sorted by MRR\n`/nebo help` - this message",
 	}
 	json, _ := json.Marshal(msg)
-	res.Header().Set("Content-type", "application/json")
 	res.Write(json)
 }
 
@@ -117,7 +114,6 @@ func writeHelpMeet(res http.ResponseWriter) {
 		Text:         "Meet usage:\n`/meet` - generate a random meet\n`/meet name` - generate a meet with a name\n`/meet help` - this message",
 	}
 	json, _ := json.Marshal(msg)
-	res.Header().Set("Content-type", "application/json")
 	res.Write(json)
 }
 
