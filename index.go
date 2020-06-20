@@ -11,14 +11,16 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/nlopes/slack"
+	"searchspring.com/slack/nextopia"
 	"searchspring.com/slack/salesforce"
 )
 
 var salesForceDAO salesforce.DAO = nil
+var nextopiaDAO nextopia.DAO = nil
 
 // Handler - check routing and call correct methods
 func Handler(res http.ResponseWriter, req *http.Request) {
-	slackVerificationCode, slackOauthToken, sfURL, sfUser, sfPassword, sfToken, err := getEnvironmentValues()
+	slackVerificationCode, slackOauthToken, sfURL, sfUser, sfPassword, sfToken, nxUser, nxPassword, err := getEnvironmentValues()
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte(err.Error()))
@@ -47,6 +49,10 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	if nextopiaDAO == nil {
+		nextopiaDAO = nextopia.NewDAO(nxUser, nxPassword)
+	}
+
 	res.Header().Set("Content-type", "application/json")
 	switch s.Command {
 	case "/rep", "/alpha-nebo", "/nebo":
@@ -55,6 +61,19 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		responseJSON, err := salesForceDAO.Query(s.Text)
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			res.Write([]byte(err.Error()))
+			return
+		}
+		res.Write(responseJSON)
+		return
+	case "/neboid", "/alpha-neboid":
+		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
+			writeHelpNeboid(res)
+			return
+		}
+		responseJSON, err := nextopiaDAO.Query(s.Text)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			res.Write([]byte(err.Error()))
@@ -107,6 +126,14 @@ func writeHelpNebo(res http.ResponseWriter) {
 	json, _ := json.Marshal(msg)
 	res.Write(json)
 }
+func writeHelpNeboid(res http.ResponseWriter) {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeEphemeral,
+		Text:         "Neboid usage:\n`/neboid <id prefix>` - find all customers with an id that starts with this prefix\n`/neboid help` - this message",
+	}
+	json, _ := json.Marshal(msg)
+	res.Write(json)
+}
 
 func writeHelpMeet(res http.ResponseWriter) {
 	msg := &slack.Msg{
@@ -151,24 +178,30 @@ func meetResponse(search string) []byte {
 	return json
 }
 
-func getEnvironmentValues() (string, string, string, string, string, string, error) {
+func getEnvironmentValues() (string, string, string, string, string, string, string, string, error) {
 	if os.Getenv("SLACK_VERIFICATION_TOKEN") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_VERIFICATION_TOKEN")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_VERIFICATION_TOKEN")
 	}
 	if os.Getenv("SLACK_OAUTH_TOKEN") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_OAUTH_TOKEN")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SLACK_OAUTH_TOKEN")
 	}
 	if os.Getenv("SF_URL") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_URL")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SF_URL")
 	}
 	if os.Getenv("SF_USER") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_USER")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SF_USER")
 	}
 	if os.Getenv("SF_PASSWORD") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_PASSWORD")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SF_PASSWORD")
 	}
 	if os.Getenv("SF_TOKEN") == "" {
-		return "", "", "", "", "", "", fmt.Errorf("Must set: SF_TOKEN")
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: SF_TOKEN")
+	}
+	if os.Getenv("NX_USER") == "" {
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: NX_USER")
+	}
+	if os.Getenv("NX_PASSWORD") == "" {
+		return "", "", "", "", "", "", "", "", fmt.Errorf("Must set: NX_PASSWORD")
 	}
 	return os.Getenv("SLACK_VERIFICATION_TOKEN"),
 		os.Getenv("SLACK_OAUTH_TOKEN"),
@@ -176,5 +209,7 @@ func getEnvironmentValues() (string, string, string, string, string, string, err
 		os.Getenv("SF_USER"),
 		os.Getenv("SF_PASSWORD"),
 		os.Getenv("SF_TOKEN"),
+		os.Getenv("NX_USER"),
+		os.Getenv("NX_PASSWORD"),
 		nil
 }

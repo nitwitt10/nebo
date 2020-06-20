@@ -3,6 +3,7 @@ module searchspring.com/slack
 go 1.13
 
 require (
+	github.com/aws/aws-lambda-go v1.17.0 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/nlopes/slack v0.6.0
 	github.com/simpleforce/simpleforce v0.0.0-20200222080651-7a01fe74c3db
