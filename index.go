@@ -195,7 +195,8 @@ func fireResponse() []byte {
 			"3. If a real fire - make an announcement in the annoucements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
 			"4. Post a link to the fire document in the announcement channel thread\n" +
 			"5. Designate helper(s) to update document\n" +
-			"6. Designate helper(s) to update announcement\n",
+			"6. Designate helper(s) to update announcement\n" + 
+			"7. Fight!",
 	}
 	json, _ := json.Marshal(msg)
 	return json
