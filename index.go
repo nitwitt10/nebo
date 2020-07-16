@@ -173,21 +173,25 @@ func featureResponse(search string) []byte {
 }
 
 func meetResponse(search string) []byte {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeInChannel,
+		Text:         getMeetLink(search),
+	}
+	json, _ := json.Marshal(msg)
+	return json
+}
+
+func getMeetLink(search string) string {
 	name := search
 	name = strings.ReplaceAll(name, " ", "-")
 	if strings.TrimSpace(search) == "" {
 		rand.Seed(time.Now().UnixNano())
 		name = petname.Generate(3, "-")
 	}
-	msg := &slack.Msg{
-		ResponseType: slack.ResponseTypeInChannel,
-		Text:         "g.co/meet/" + name,
-	}
-	json, _ := json.Marshal(msg)
-	return json
+	return "g.co/meet/" + name;
 }
-func fireResponse() []byte {
 
+func fireResponse() []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
 		Text: "1. Create Fire document - https://docs.google.com/document/create?usp=drive_web&ouid=117735186481765666461&folder=1CgRBFg2CTbvjLp57yfoUOD_OZlaVxOht\n" +
@@ -196,11 +200,13 @@ func fireResponse() []byte {
 			"4. Post a link to the fire document in the announcement channel thread\n" +
 			"5. Designate helper(s) to update document\n" +
 			"6. Designate helper(s) to update announcement\n" + 
-			"7. Fight!",
+			"7. Fight!\n" +
+			getMeetLink(""),
 	}
 	json, _ := json.Marshal(msg)
 	return json
 }
+
 func fireDownResponse() []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
