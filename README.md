@@ -32,6 +32,9 @@ Nebo is a slackbot that helps us ask salesforce questions without having to go i
     SF_PASSWORD=<sf password>
     SF_TOKEN=<sf token>
     SLACK_VERIFICATION_TOKEN=<slack token>
+    SLACK_OAUTH_TOKEN=<slack oauth token>
+    NX_USER=<nx user>
+    NX_PASSWORD=<nx password>
     ```
 
 - Run the server `now dev`
