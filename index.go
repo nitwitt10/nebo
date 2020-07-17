@@ -68,6 +68,15 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		}
 		res.Write(responseJSON)
 		return
+
+	case "/fire":
+		res.Write(fireResponse())
+		return
+
+	case "/firedown":
+		res.Write(fireDownResponse())
+		return
+
 	case "/neboid", "/alpha-neboid":
 		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
 			writeHelpNeboid(res)
@@ -173,6 +182,31 @@ func meetResponse(search string) []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
 		Text:         "g.co/meet/" + name,
+	}
+	json, _ := json.Marshal(msg)
+	return json
+}
+func fireResponse() []byte {
+
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeInChannel,
+		Text: "1. Create Fire document - https://docs.google.com/document/create?usp=drive_web&ouid=117735186481765666461&folder=1CgRBFg2CTbvjLp57yfoUOD_OZlaVxOht\n" +
+			"2. Designate Fire Leader\n" +
+			"3. If a real fire - make an announcement in the annoucements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
+			"4. Post a link to the fire document in the announcement channel thread\n" +
+			"5. Designate helper(s) to update document\n" +
+			"6. Designate helper(s) to update announcement\n" + 
+			"7. Fight!",
+	}
+	json, _ := json.Marshal(msg)
+	return json
+}
+func fireDownResponse() []byte {
+	msg := &slack.Msg{
+		ResponseType: slack.ResponseTypeInChannel,
+		Text: "1. Ask if there are any cleanup tasks to do\n" +
+			"2. Update announcements channel\n" +
+			"3. If applicable, schedule post mortem\n",
 	}
 	json, _ := json.Marshal(msg)
 	return json
