@@ -14,6 +14,12 @@ Nebo is a slackbot that helps us ask salesforce questions without having to go i
 
 `/feature i want this feature please`
 
+`/fire` - fire checklist
+
+`/firedown` - fire over checklist
+
+`/meet` - generate a randomly named meeting invite
+
 ## Development
 
 ### Prereqs
