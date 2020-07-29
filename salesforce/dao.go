@@ -27,12 +27,13 @@ var Platforms = []string{
 }
 
 type accountInfo struct {
-	Website   string
-	Manager   string
-	Active    string
-	MRR       float64
-	FamilyMRR float64
-	Platform  string
+	Website     string
+	Manager     string
+	Active      string
+	MRR         float64
+	FamilyMRR   float64
+	Platform    string
+	Integration string
 }
 
 type DAO interface {
@@ -66,7 +67,7 @@ func (s *DAOImpl) Query(search string) ([]byte, error) {
 
 	sanitized := reg.ReplaceAllString(search, "")
 
-	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c " +
+	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c, Integration_Type__c " +
 		"FROM Account WHERE Type IN ('Customer', 'Inactive Customer') " +
 		"AND (Website LIKE '%" + sanitized + "%' OR Platform__c LIKE '%" + sanitized + "%') ORDER BY Chargify_MRR__c DESC"
 	result, err := s.Client.Query(q)
@@ -95,6 +96,10 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 		if record["Platform__c"] != nil {
 			platform = fmt.Sprintf("%s", record["Platform__c"])
 		}
+		integration := "unknown"
+		if record["Integration_Type__c"] != nil {
+			integration = fmt.Sprintf("%s", record["Integration_Type__c"])
+		}
 		mrr := float64(-1)
 		fmt.Println(fmt.Sprintf("%s", record["Website"]), record["Chargify_MRR__c"])
 		if record["Chargify_MRR__c"] != nil {
@@ -112,10 +117,17 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			MRR:       mrr,
 			FamilyMRR: familymrr,
 			Platform:  platform,
+			Integration:  integration,
 		})
 	}
 	accounts = cleanAccounts(accounts)
-	if !isPlatformSearch(search) {
+	if !is
+	
+	
+	
+	
+	
+	Search(search) {
 		accounts = sortAccounts(accounts)
 	}
 	accounts = truncateAccounts(accounts)
