@@ -22,6 +22,7 @@ var Platforms = []string{
 	"Netsuite",
 	"Other",
 	"Shopify",
+	"Shopify Plus",
 	"Yahoo",
 }
 
