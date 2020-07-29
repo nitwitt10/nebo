@@ -22,6 +22,7 @@ func createQueryResults() *simpleforce.QueryResult {
 				"CS_Manager__r": { "Name": "Ashley Hilton" },
 				"Family_MRR__c": 14858.54,
 				"Chargify_MRR__c": 3955.17,
+				"Integration_Type__c":"v3",
 				"Platform__c":"Custom"} 
 			]
 		}`), qr)
@@ -40,6 +41,7 @@ func TestFormatAccountInfos(t *testing.T) {
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Rep: Ashley Hilton"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "MRR: $3955.17"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Platform: Custom"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Integration: v3"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Family MRR: $14858.54"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Active: Not active"))
 	require.Equal(t, "fabletics.com", msg.Attachments[0].AuthorName)
