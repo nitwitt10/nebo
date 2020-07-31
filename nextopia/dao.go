@@ -2,7 +2,6 @@ package nextopia
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -51,7 +50,6 @@ func (d *DAOImpl) Query(query string) ([]byte, error) {
 			return nil, err
 		}
 		d.Customers = map[string][]string{}
-		fmt.Println(resultData.Data[0])
 		for _, row := range resultData.Data {
 			d.Customers[row[0]] = row
 		}

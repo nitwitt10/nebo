@@ -101,7 +101,6 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			integration = fmt.Sprintf("%s", record["Integration_Type__c"])
 		}
 		mrr := float64(-1)
-		fmt.Println(fmt.Sprintf("%s", record["Website"]), record["Chargify_MRR__c"])
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
 		}

@@ -2,7 +2,6 @@ package salesforce
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -36,7 +35,6 @@ func TestFormatAccountInfos(t *testing.T) {
 	msg := &slack.Msg{}
 	err = json.Unmarshal(response, msg)
 	require.Nil(t, err)
-	fmt.Println(c(json.Marshal(msg)))
 	require.True(t, strings.Contains(msg.Text, "search term"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Rep: Ashley Hilton"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "MRR: $3955.17"))
