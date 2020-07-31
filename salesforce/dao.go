@@ -101,7 +101,6 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			integration = fmt.Sprintf("%s", record["Integration_Type__c"])
 		}
 		mrr := float64(-1)
-		fmt.Println(fmt.Sprintf("%s", record["Website"]), record["Chargify_MRR__c"])
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
 		}
@@ -111,23 +110,17 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 		}
 
 		accounts = append(accounts, &accountInfo{
-			Website:   fmt.Sprintf("%s", record["Website"]),
-			Manager:   fmt.Sprintf("%s", managerName),
-			Active:    fmt.Sprintf("%s", active),
-			MRR:       mrr,
-			FamilyMRR: familymrr,
-			Platform:  platform,
-			Integration:  integration,
+			Website:     fmt.Sprintf("%s", record["Website"]),
+			Manager:     fmt.Sprintf("%s", managerName),
+			Active:      fmt.Sprintf("%s", active),
+			MRR:         mrr,
+			FamilyMRR:   familymrr,
+			Platform:    platform,
+			Integration: integration,
 		})
 	}
 	accounts = cleanAccounts(accounts)
-	if !is
-	
-	
-	
-	
-	
-	Search(search) {
+	if !isPlatformSearch(search) {
 		accounts = sortAccounts(accounts)
 	}
 	accounts = truncateAccounts(accounts)
@@ -180,7 +173,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
 		mrr = mrr + " (Family MRR: " + familymrr + ")"
-		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active
+		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active + "\nIntegration: " + ai.Integration
 		msg.Attachments = append(msg.Attachments, slack.Attachment{
 			Color:      "#" + color,
 			Text:       text,
