@@ -89,7 +89,7 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			}
 		}
 		Type := record["Type"]
-		active := "Yes"
+		active := "Active"
 		if Type != "Customer" {
 			active = "Not active"
 		}
@@ -179,11 +179,11 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
 		mrr = mrr + " (Family MRR: " + familymrr + ")"
-		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active + "\nIntegration: " + ai.Integration + "\nProvider: " + ai.Provider
+		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nIntegration: " + ai.Integration + "\nProvider: " + ai.Provider
 		msg.Attachments = append(msg.Attachments, slack.Attachment{
 			Color:      "#" + color,
 			Text:       text,
-			AuthorName: ai.Website,
+			AuthorName: ai.Website + " (" + ai.Active + ")",
 		})
 	}
 	return msg
