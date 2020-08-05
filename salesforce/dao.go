@@ -102,8 +102,8 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			integration = fmt.Sprintf("%s", record["Integration_Type__c"])
 		}
 		provider := "unknown"
-		if record["Chargiy_Source__c"] != nil {
-			provider = fmt.Sprintf("%s", record["Chargiy_Source__c"])
+		if record["Chargify_Source__c"] != nil {
+			provider = fmt.Sprintf("%s", record["Chargify_Source__c"])
 		}
 		mrr := float64(-1)
 		if record["Chargify_MRR__c"] != nil {
