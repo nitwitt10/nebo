@@ -34,6 +34,7 @@ type accountInfo struct {
 	FamilyMRR   float64
 	Platform    string
 	Integration string
+	provider    string
 }
 
 type DAO interface {
@@ -67,7 +68,7 @@ func (s *DAOImpl) Query(search string) ([]byte, error) {
 
 	sanitized := reg.ReplaceAllString(search, "")
 
-	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c, Integration_Type__c " +
+	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c, Integration_Type__c, Chargify_Source__c " +
 		"FROM Account WHERE Type IN ('Customer', 'Inactive Customer') " +
 		"AND (Website LIKE '%" + sanitized + "%' OR Platform__c LIKE '%" + sanitized + "%') ORDER BY Chargify_MRR__c DESC"
 	result, err := s.Client.Query(q)
@@ -100,6 +101,10 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 		if record["Integration_Type__c"] != nil {
 			integration = fmt.Sprintf("%s", record["Integration_Type__c"])
 		}
+		provider := "unknown"
+		if record["Chargiy_Source__c"] != nil {
+			provider = fmt.Sprintf("%s", record["Chargiy_Source__c"])
+		}
 		mrr := float64(-1)
 		if record["Chargify_MRR__c"] != nil {
 			mrr = record["Chargify_MRR__c"].(float64)
@@ -117,6 +122,7 @@ func (s *DAOImpl) ResultToMessage(search string, result *simpleforce.QueryResult
 			FamilyMRR:   familymrr,
 			Platform:    platform,
 			Integration: integration,
+			Provider:    provider,
 		})
 	}
 	accounts = cleanAccounts(accounts)
@@ -173,7 +179,7 @@ func formatAccountInfos(accountInfos []*accountInfo, search string) *slack.Msg {
 			familymrr = fmt.Sprintf("$%.2f", ai.FamilyMRR)
 		}
 		mrr = mrr + " (Family MRR: " + familymrr + ")"
-		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active + "\nIntegration: " + ai.Integration
+		text := "Rep: " + ai.Manager + "\nMRR: " + mrr + "\nPlatform: " + ai.Platform + "\nActive: " + ai.Active + "\nIntegration: " + ai.Integration + "\nProvider: " + ai.Provider
 		msg.Attachments = append(msg.Attachments, slack.Attachment{
 			Color:      "#" + color,
 			Text:       text,
