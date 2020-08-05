@@ -34,7 +34,7 @@ type accountInfo struct {
 	FamilyMRR   float64
 	Platform    string
 	Integration string
-	provider    string
+	Provider    string
 }
 
 type DAO interface {
