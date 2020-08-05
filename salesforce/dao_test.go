@@ -41,7 +41,7 @@ func TestFormatAccountInfos(t *testing.T) {
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "MRR: $3955.17"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Platform: Custom"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Integration: v3"))
-	require.True(t, strings.Contains(msg.Attachments[0].Text, "Platform: Searchspring"))
+	require.True(t, strings.Contains(msg.Attachments[0].Text, "Provider: Searchspring"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Family MRR: $14858.54"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Active: Not active"))
 	require.Equal(t, "fabletics.com", msg.Attachments[0].AuthorName)
