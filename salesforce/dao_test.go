@@ -22,7 +22,7 @@ func createQueryResults() *simpleforce.QueryResult {
 				"Family_MRR__c": 14858.54,
 				"Chargify_MRR__c": 3955.17,
 				"Integration_Type__c":"v3",
-				"Charigfy_Source__c":"Searchspring",
+				"Chargify_Source__c":"Searchspring",
 				"Platform__c":"Custom"} 
 			]
 		}`), qr)
