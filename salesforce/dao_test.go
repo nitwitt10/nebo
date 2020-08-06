@@ -16,8 +16,8 @@ func createQueryResults() *simpleforce.QueryResult {
 	qr := &simpleforce.QueryResult{}
 	json.Unmarshal([]byte(`{ "totalSize": 1,
 		"done": true,
-		"records": [{
-				"Website": "fabletics.com",
+		"records": [{ 
+				"Website": "fabletics.com (Not active)",
 				"CS_Manager__r": { "Name": "Ashley Hilton" },
 				"Family_MRR__c": 14858.54,
 				"Chargify_MRR__c": 3955.17,
@@ -43,7 +43,7 @@ func TestFormatAccountInfos(t *testing.T) {
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Integration: v3"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Provider: Searchspring"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Family MRR: $14858.54"))
-	require.Equal(t, "fabletics.com", msg.Attachments[0].AuthorName)
+	require.Equal(t, "fabletics.com (Not active)", msg.Attachments[0].AuthorName)
 	require.Equal(t, "#3A23AD", msg.Attachments[0].Color)
 }
 
