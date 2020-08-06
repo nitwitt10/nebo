@@ -43,7 +43,6 @@ func TestFormatAccountInfos(t *testing.T) {
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Integration: v3"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Provider: Searchspring"))
 	require.True(t, strings.Contains(msg.Attachments[0].Text, "Family MRR: $14858.54"))
-	require.True(t, strings.Contains(msg.Attachments[0].Text, "Active: Not active"))
 	require.Equal(t, "fabletics.com", msg.Attachments[0].AuthorName)
 	require.Equal(t, "#3A23AD", msg.Attachments[0].Color)
 }
