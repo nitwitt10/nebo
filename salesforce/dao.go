@@ -70,7 +70,8 @@ func (s *DAOImpl) Query(search string) ([]byte, error) {
 
 	q := "SELECT Type, Website, CS_Manager__r.Name, Family_MRR__c, Chargify_MRR__c, Platform__c, Integration_Type__c, Chargify_Source__c " +
 		"FROM Account WHERE Type IN ('Customer', 'Inactive Customer') " +
-		"AND (Website LIKE '%" + sanitized + "%' OR Platform__c LIKE '%" + sanitized + "%') ORDER BY Chargify_MRR__c DESC"
+		"AND (Website LIKE '%" + sanitized + "%' OR Platform__c LIKE '%" + sanitized + 
+		"%' OR Tracking_Code__c = '" + sanitized + "') ORDER BY Chargify_MRR__c DESC"
 	result, err := s.Client.Query(q)
 	if err != nil {
 		return nil, err
