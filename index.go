@@ -84,9 +84,9 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		}
 		var responseJSON []byte = nil
 		if len(s.Text) == 6 { // if 6 then assume SS codes as they are exactly 6; Nextopia is much longer
-			responseJSON, err := salesForceDAO.Query(s.Text)
+			responseJSON, err = salesForceDAO.Query(s.Text)
 		} else {
-			responseJSON, err := nextopiaDAO.Query(s.Text)
+			responseJSON, err = nextopiaDAO.Query(s.Text)
 		}
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
