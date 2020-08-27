@@ -12,6 +12,10 @@ Nebo is a slackbot that helps us ask salesforce questions without having to go i
 
 `/nebo bigcommerce`
 
+`/neboidnx A21BCDE5FE33` - find a customer with this key in the Nextopia system
+
+`/neboidss m6umjp` - find a customer with this ID in the Searchspring system
+
 `/feature i want this feature please`
 
 `/fire` - fire checklist
