@@ -77,17 +77,26 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		res.Write(fireDownResponse())
 		return
 
-	case "/neboid", "/alpha-neboid":
+	case "/neboidnx", "/neboid":
 		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
 			writeHelpNeboid(res)
 			return
 		}
-		var responseJSON []byte = nil
-		if len(s.Text) == 6 { // if 6 then assume SS codes as they are exactly 6; Nextopia is much longer
-			responseJSON, err = salesForceDAO.Query(s.Text)
-		} else {
-			responseJSON, err = nextopiaDAO.Query(s.Text)
+		responseJSON, err := nextopiaDAO.Query(s.Text)
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			res.Write([]byte(err.Error()))
+			return
 		}
+		res.Write(responseJSON)
+		return
+
+	case "/neboidss":
+		if strings.TrimSpace(s.Text) == "help" || strings.TrimSpace(s.Text) == "" {
+			writeHelpNeboid(res)
+			return
+		}
+		responseJSON, err := salesForceDAO.IDQuery(s.Text)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			res.Write([]byte(err.Error()))
@@ -193,7 +202,7 @@ func getMeetLink(search string) string {
 		rand.Seed(time.Now().UnixNano())
 		name = petname.Generate(3, "-")
 	}
-	return "g.co/meet/" + name;
+	return "g.co/meet/" + name
 }
 
 func fireResponse() []byte {
@@ -204,7 +213,7 @@ func fireResponse() []byte {
 			"3. If a real fire - make an announcement in the annoucements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
 			"4. Post a link to the fire document in the announcement channel thread\n" +
 			"5. Designate helper(s) to update document\n" +
-			"6. Designate helper(s) to update announcement\n" + 
+			"6. Designate helper(s) to update announcement\n" +
 			"7. Fight!\n" +
 			getMeetLink(""),
 	}
