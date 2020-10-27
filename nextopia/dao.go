@@ -7,12 +7,15 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"searchspring.com/slack/validator"
 )
 
+// DAO acts as the nextopia DAO
 type DAO interface {
 	Query(query string) ([]byte, error)
 }
 
+// DAOImpl defines the properties of the DAO
 type DAOImpl struct {
 	Client    *http.Client
 	User      string
@@ -20,7 +23,11 @@ type DAOImpl struct {
 	Customers map[string][]string
 }
 
+// NewDAO returns the nextopia DAO
 func NewDAO(nxUser string, nxPassword string) DAO {
+	if validator.ContainsEmptyString(nxUser, nxPassword) {
+		return nil
+	}
 	return &DAOImpl{
 		User:     nxUser,
 		Password: nxPassword,
@@ -33,6 +40,7 @@ type resultData struct {
 	Data [][]string `json:"data"`
 }
 
+// Query queries the nextopia client report DB using provided query string
 func (d *DAOImpl) Query(query string) ([]byte, error) {
 	if d.Customers == nil {
 		res, err := d.Client.Get("http://" + d.User + ":" + d.Password + "@client-report.nxtpd.com/api/data-table.php?table=accounts&_=1592606239141")

@@ -3,15 +3,17 @@ package salesforce
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/nlopes/slack"
 	"github.com/simpleforce/simpleforce"
+	"searchspring.com/slack/validator"
 )
 
-// List of platforms in salesforce
+// Platforms is a list of platforms in salesforce
 var Platforms = []string{
 	"3dcart",
 	"BigCommerce",
@@ -37,28 +39,36 @@ type accountInfo struct {
 	Provider    string
 }
 
+// DAO acts as the salesforce DAO
 type DAO interface {
 	Query(query string) ([]byte, error)
 	IDQuery(query string) ([]byte, error)
 	ResultToMessage(query string, result *simpleforce.QueryResult) ([]byte, error)
 }
 
+// DAOImpl defines the properties of the DAO
 type DAOImpl struct {
 	Client *simpleforce.Client
 }
 
-func NewDAO(sfURL string, sfUser string, sfPassword string, sfToken string) (DAO, error) {
+// NewDAO returns the salesforce DAO
+func NewDAO(sfURL string, sfUser string, sfPassword string, sfToken string) DAO {
+	if validator.ContainsEmptyString(sfURL, sfUser, sfPassword, sfToken) {
+		return nil
+	}
 	client := simpleforce.NewClient(sfURL, simpleforce.DefaultClientID, simpleforce.DefaultAPIVersion)
 	if client == nil {
-		return nil, fmt.Errorf("nil returned from client creation")
+		log.Println("nil returned from client creation")
+		return nil
 	}
 	err := client.LoginPassword(sfUser, sfPassword, sfToken)
 	if err != nil {
-		return nil, err
+		log.Println(err.Error())
+		return nil
 	}
 	return &DAOImpl{
 		Client: client,
-	}, nil
+	}
 }
 
 func (s *DAOImpl) Query(search string) ([]byte, error) {
