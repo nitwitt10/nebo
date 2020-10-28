@@ -108,7 +108,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			writeHelpFire(w)
 			return
 		}
-		if gapiDAO == nil {
+		if gapiDAO == nil || sapiDAO == nil {
 			sendInternalServerError(w, errors.New("missing required Google API credentials"))
 			return
 		}
