@@ -112,13 +112,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			sendInternalServerError(w, errors.New("missing required Google API credentials"))
 			return
 		}
-		// We only have 3 seconds to initially respond
-		// https://api.slack.com/interactivity/slash-commands#responding_to_commands
-		// So we ACK before doing our work because Google APIs can be slow enough
-		// that slack will drop our connection before we finish doing everything and responding
 		fireTitle := cleanFireTitle(s.Text)
-		initialMsg := "New Fire: :fire:*" + fireTitle + "*:fire:\nCreating fire doc & checklist now...\n"
-		postSlackMessage(s.ResponseURL, slack.ResponseTypeInChannel, initialMsg)
 		go fireResponse(gapiDAO, sapiDAO, env.GdriveFireDocFolderID, fireTitle, s.ResponseURL, s.UserID)
 		return
 
@@ -304,13 +298,14 @@ func cleanFireTitle(title string) string {
 	return title
 }
 
-func fireChecklist(fireDocFolderID string, documentID string, title string, err error) string {
-	fireDocLink := fmt.Sprintf("<https://docs.google.com/document/d/%s/edit|%s>", documentID, title)
+func fireChecklist(folderID string, documentID string, title string, err error) string {
+	link := fmt.Sprintf("<https://docs.google.com/document/d/%s/edit|%s>", documentID, title)
 	if documentID == "" {
-		fireDocLink = fmt.Sprintf("Create new fire doc <https://drive.google.com/drive/folders/%s|here>", fireDocFolderID)
+		link = fmt.Sprintf("Create new fire doc <https://drive.google.com/drive/folders/%s|here>", folderID)
 	}
-	text := "1. Designate Fire Leader\n" +
-		"2. Designate Fire Doc Maintainer: " + fireDocLink + "\n" +
+	text := "New Fire: :fire:*" + title + "*:fire:\n" +
+		"1. Designate Fire Leader\n" +
+		"2. Designate Fire Doc Maintainer: " + link + "\n" +
 		"3. If a real fire - make an announcement in the annoucements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
 		"4. Post a link to the fire document in the announcement channel thread\n" +
 		"5. Designate helper(s) to update announcement\n" +
