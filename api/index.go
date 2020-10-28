@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -76,7 +77,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	sapiDAO = sapi.NewDAO(env.SlackVerificationToken, env.SlackOauthToken)
 	nextopiaDAO = nextopia.NewDAO(env.NxUser, env.NxPassword)
 	salesForceDAO = salesforce.NewDAO(env.SfURL, env.SfUser, env.SfPassword, env.SfToken)
-	gapiDAO = gapi.NewDAO(env.GcpServiceAccountEmail, env.GcpServiceAccountPrivateKey, env.GdriveFireDocFolderID)
+
+	decodedKey, err := base64.StdEncoding.DecodeString(env.GcpServiceAccountPrivateKey)
+	if err != nil {
+		sendInternalServerError(w, err)
+	}
+	gapiDAO = gapi.NewDAO(env.GcpServiceAccountEmail, string(decodedKey), env.GdriveFireDocFolderID)
 
 	w.Header().Set("Content-type", "application/json")
 	switch s.Command {
@@ -111,7 +117,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		// So we ACK before doing our work because Google APIs can be slow enough
 		// that slack will drop our connection before we finish doing everything and responding
 		fireTitle := cleanFireTitle(s.Text)
-		w.Write([]byte("New Fire: :fire:*" + fireTitle + "*:fire:\nCreating fire doc & checklist now...\n"))
+		initialMsg := "New Fire: :fire:*" + fireTitle + "*:fire:\nCreating fire doc & checklist now...\n"
+		postSlackMessage(s.ResponseURL, slack.ResponseTypeInChannel, initialMsg)
 		go fireResponse(gapiDAO, sapiDAO, env.GdriveFireDocFolderID, fireTitle, s.ResponseURL, s.UserID)
 		return
 
@@ -273,12 +280,20 @@ func getMeetLink(search string) string {
 func fireResponse(g gapi.DAO, s sapi.DAO, folderID string, title string, responseURL string, userID string) {
 	now, err := sapiDAO.GetUserNow(userID)
 	documentID, err := g.GenerateFireDoc(title, now)
+	postSlackMessage(responseURL, slack.ResponseTypeInChannel, fireChecklist(folderID, documentID, title, err))
+}
+
+func postSlackMessage(responseURL string, responseType string, text string) error {
 	msg := &slack.Msg{
-		ResponseType: slack.ResponseTypeInChannel,
-		Text:         fireChecklist(folderID, documentID, title, err),
+		ResponseType: responseType,
+		Text:         text,
 	}
-	json, _ := json.Marshal(msg)
-	http.Post(responseURL, "application/json", bytes.NewBuffer(json))
+	json, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	_, err = http.Post(responseURL, "application/json", bytes.NewBuffer(json))
+	return err
 }
 
 func cleanFireTitle(title string) string {
@@ -330,7 +345,9 @@ func findBlankEnvVars(env envVars) []string {
 	valueOfStruct := reflect.ValueOf(env)
 	typeOfStruct := valueOfStruct.Type()
 	for i := 0; i < valueOfStruct.NumField(); i++ {
-		blanks = append(blanks, typeOfStruct.Field(i).Name)
+		if valueOfStruct.Field(i).Interface() == "" {
+			blanks = append(blanks, typeOfStruct.Field(i).Name)
+		}
 	}
 	return blanks
 }
