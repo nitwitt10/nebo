@@ -15,8 +15,9 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/nlopes/slack"
-	"searchspring.com/slack/nextopia"
-	"searchspring.com/slack/salesforce"
+
+	"github.com/searchspring/nebo/nextopia"
+	"github.com/searchspring/nebo/salesforce"
 )
 
 type envVars struct {
@@ -94,7 +95,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			writeHelpFire(w)
 			return
 		}
-		fireResponse(env.GdriveFireDocFolderID, s.Text, s.ResponseURL)
+		fireResponse(env.GdriveFireDocFolderID, s.ResponseURL)
 		return
 
 	case "/firedown":
@@ -181,7 +182,7 @@ func writeHelpFeature(w http.ResponseWriter) {
 func writeHelpFire(w http.ResponseWriter) {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeEphemeral,
-		Text:         "Fire usage:\n`/fire <fire title>` - generate a fire checklist to handle the fire",
+		Text:         "Fire usage:\n`/fire` - generate a fire checklist to handle the fire",
 	}
 	json, _ := json.Marshal(msg)
 	w.Write(json)
@@ -252,8 +253,8 @@ func getMeetLink(search string) string {
 	return "g.co/meet/" + name
 }
 
-func fireResponse(folderID string, title string, responseURL string) {
-	checklist := fireChecklist(folderID, title)
+func fireResponse(folderID string, responseURL string) {
+	checklist := fireChecklist(folderID)
 	postSlackMessage(responseURL, slack.ResponseTypeInChannel, checklist)
 }
 
@@ -278,18 +279,15 @@ func cleanFireTitle(title string) string {
 	return title
 }
 
-func fireChecklist(folderID string, title string) string {
-	title = cleanFireTitle(title)
-	link := fmt.Sprintf("create new fire doc <https://drive.google.com/drive/folders/%s|here>", folderID)
-	text := "...\n:fire:*" + title + "*:fire:\n" +
-		"1. Designate fire leader\n" +
-		"2. Designate fire doc maintainer and " + link + "\n" +
-		"3. Post link to fire doc in this message's thread" +
-		"4. If a real fire - make an announcement in the announcements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
-		"5. Post a link to the fire document in the announcement channel thread\n" +
-		"6. Designate helper(s) to update announcement\n" +
-		"7. Fight! " + getMeetLink(title) + "\n" +
-		"8. Use `/firedown` when the fire is out"
+func fireChecklist(folderID string) string {
+	text := "1. Assemble the <!subteam^S01DXD4HKCH> in the <#C01DFMK1F4M> channel\n" +
+		"2. Designate fire leader, document maintainer, announcements updater\n" +
+		"3. Fire doc maintainer creates a new doc here: " + fmt.Sprintf("<https://drive.google.com/drive/folders/%s>", folderID) + "\n" +
+		"4. Post link to the fire doc\n" +
+		"5. If a real fire - announcemer posts to the announcements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
+		"6. Post a link to the fire document in the announcement channel thread\n" +
+		"7. Fight! " + getMeetLink("fire-investigation") + "\n\n\n" +
+		"8. Use `/firedown` when the fire is out\n"
 	return text
 }
 
@@ -297,8 +295,8 @@ func fireDownResponse() []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
 		Text: "1. Ask if there are any cleanup tasks to do\n" +
-			"2. Update announcements channel\n" +
-			"3. If applicable, schedule post mortem\n",
+			"2. Update the announcements channel\n" +
+			"3. If applicable, schedule a post mortem\n",
 	}
 	json, _ := json.Marshal(msg)
 	return json
