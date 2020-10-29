@@ -17,5 +17,11 @@
       "src": "api/index.go",
       "use": "@vercel/go"
     }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/api"
+    }
   ]
 }
