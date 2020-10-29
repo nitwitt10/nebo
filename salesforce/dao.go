@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"github.com/searchspring/nebo/validator"
 	"github.com/simpleforce/simpleforce"
-	"searchspring.com/slack/validator"
 )
 
 // Platforms is a list of platforms in salesforce

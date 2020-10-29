@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/searchspring/nebo/validator"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/docs/v1"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
-	"searchspring.com/slack/validator"
 )
 
 // DAO acts as the gapi DAO

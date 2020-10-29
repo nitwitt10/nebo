@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
-	"searchspring.com/slack/validator"
+	"github.com/searchspring/nebo/validator"
 )
 
 // DAO acts as the slack DAO
