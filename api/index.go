@@ -284,9 +284,9 @@ func fireChecklist(folderID string) string {
 		"2. Designate fire leader, document maintainer, announcements updater\n" +
 		"3. Fire doc maintainer creates a new doc here: " + fmt.Sprintf("<https://drive.google.com/drive/folders/%s>", folderID) + "\n" +
 		"4. Post link to the fire doc\n" +
-		"5. If a real fire - announcemer posts to the announcements channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
-		"6. Post a link to the fire document in the announcement channel thread\n" +
-		"7. Fight! " + getMeetLink("fire-investigation") + "\n\n\n" +
+		"5. If a real fire - announcer posts to the <#C024FV14Z> channel \"There is a fire and engineering is investigating, updates will be posted in a thread on this message\"\n" +
+		"6. Post a link to the fire document in the <#C024FV14Z> channel thread\n" +
+		"7. Fight! " + getMeetLink("fire-investigation-"+timestamp(time.Now())) + "\n\n\n" +
 		"8. Use `/firedown` when the fire is out\n"
 	return text
 }
@@ -295,11 +295,15 @@ func fireDownResponse() []byte {
 	msg := &slack.Msg{
 		ResponseType: slack.ResponseTypeInChannel,
 		Text: "1. Ask if there are any cleanup tasks to do\n" +
-			"2. Update the announcements channel\n" +
-			"3. If applicable, schedule a post mortem\n",
+			"2. Update the <#C024FV14Z>  channel\n" +
+			"3. If applicable, schedule a blameless post mortem\n",
 	}
 	json, _ := json.Marshal(msg)
 	return json
+}
+
+func timestamp(currentTime time.Time) string {
+	return fmt.Sprint(currentTime.UTC().Format("2006-01-02-15-04"))
 }
 
 func sendInternalServerError(w http.ResponseWriter, err error) {
